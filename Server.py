@@ -2,10 +2,9 @@
 from flask import Flask, request, jsonify,Response # For flask implementation
 from flask_restful import Api, Resource, abort
 #import pymongo
-from pymongo import MongoClient # Database connector
+from pymongo import MongoClient, ReturnDocument # Database connector
 from bson.objectid import ObjectId
-import os
-
+import os,ast
 
 
 mongodb_host = os.environ.get('MONGO_HOST', 'localhost')
@@ -73,16 +72,18 @@ class Poll (Resource):
         try:
             dictionary = dict(request.get_json())
             chosen_answer = list(dictionary.values())[0]
-            poll_dict = poll_col.find_one(ObjectId(id))
+            poll_dict = str(poll_col.find_one(ObjectId(id)))
+            poll_dict =ast.literal_eval(poll_dict.replace("ObjectId(","").replace(")",""))
             print(poll_dict)
+            
             answers_list = poll_dict["answers_list"]
             if chosen_answer in answers_list:
                 answers_list[chosen_answer]+=1
                 print(answers_list)
                 poll_dict["answers_list"]=answers_list
-                #poll_col.find_one_and_update({"_id":id},{'$set':{"answers_list":answers_list}})
-                print(True)
-                return poll_dict
+                poll_col.find_one_and_update(filter={"_id":ObjectId(id)},update={'$set':{"answers_list":answers_list}},return_document=ReturnDocument.AFTER)
+                print(poll_dict)
+                return Response(str(poll_dict),status=200,mimetype='application/json')
             else:
                 abort(400, message="Bad entry! Please make sure to enter a valid answer")
 

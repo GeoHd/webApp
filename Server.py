@@ -1,8 +1,9 @@
 
-from flask import Flask, request, jsonify # For flask implementation
+from flask import Flask, request, jsonify,Response # For flask implementation
 from flask_restful import Api, Resource, abort
-import pymongo
+#import pymongo
 from pymongo import MongoClient # Database connector
+from bson.objectid import ObjectId
 import os
 
 
@@ -11,7 +12,7 @@ mongodb_host = os.environ.get('MONGO_HOST', 'localhost')
 mongodb_port = int(os.environ.get('MONGO_PORT', '27017'))
 client = MongoClient(mongodb_host, mongodb_port)    #Configure the connection to the database
 db = client.cisco    #Select the database
-
+poll_col = db["Polls"]
 
 
 app = Flask(__name__)
@@ -20,14 +21,17 @@ api = Api(app)
 
 class Polls (Resource):
     def get(self):
-        
+
         return
 
     def post(self):
         try:
             dictionary = dict(request.get_json())
             print(dictionary)
-            new_entry = {'question':str(dictionary.get('question')),'answers_list':list(dictionary.get('answers_list'))}
+            answers_list = {}
+            for answer in  list(dictionary.get('answers_list')):
+                answers_list[answer]=0
+            new_entry = {'question':str(dictionary.get('question')),'answers_list':answers_list}
             
     
             
@@ -37,16 +41,17 @@ class Polls (Resource):
                 abort (400,message="It looks like your pol has no answers..")
             
                 
-            pol_id = 0
             #create in database
-            collection = db["Polls"]
-            collection.insert_one(new_entry)
             
+            result = poll_col.insert_one(new_entry)
+            print(1234)
             
-            return pol_id
+            id = result.inserted_id
+            
+            response_text =   str({"pol_id":id})  
+            return Response(response_text,status=201, mimetype='application/json')
             
         except:
-            
             abort(400, message="Bad entry! Please make sure that the entry match the especification in the documentation")
 
 
@@ -57,18 +62,33 @@ class Polls (Resource):
 
 class Poll (Resource):
     def get(self,id):
-        print(request.form)
+        try:
+            result = poll_col.find_one({"_id":id})
+            return result
 
-        if (type(id)==int):
-            try:
-                return
-            except:
-                abort(404,"There is no poll with the given id number")
-    
-        else:
-            abort(404,message="Bad entry. Please make sure to enter a valid poll id number")
+        except:
+            abort(400, message="Bad entry! Please make sure to enter a valid poll id")
         
-    
+    def put(self,id):
+        try:
+            dictionary = dict(request.get_json())
+            chosen_answer = list(dictionary.values())[0]
+            poll_dict = poll_col.find_one(ObjectId(id))
+            print(poll_dict)
+            answers_list = poll_dict["answers_list"]
+            if chosen_answer in answers_list:
+                answers_list[chosen_answer]+=1
+                print(answers_list)
+                poll_dict["answers_list"]=answers_list
+                #poll_col.find_one_and_update({"_id":id},{'$set':{"answers_list":answers_list}})
+                print(True)
+                return poll_dict
+            else:
+                abort(400, message="Bad entry! Please make sure to enter a valid answer")
+
+        except: 
+            abort(400, message="Bad entry! Please make sure to enter a valid poll id")
+
 
 
     def post(self):
@@ -88,7 +108,7 @@ class Hotel (Resource):
 
         return
 
-api.add_resource(Poll,"/api/poll/<int:id>")
+api.add_resource(Poll,"/api/poll/<string:id>")
 
 api.add_resource(Polls,"/api/polls/")
 

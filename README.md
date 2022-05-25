@@ -24,7 +24,9 @@ After fulfilling the requirements, you can run the mongodb database, run server 
 You can invoke this method by sending a GET request to the following url:
 
 `http://127.0.0.1:5000/api/polls/`
-This request will return a json file with all the polls in the database
+This request will return a json file with all the polls in the database with the following format:
+
+`{'Poll_1':{'_id':id, 'question': question_1, 'answers_list': answers_list_1}, 'Poll_2':{ ....}}`
 
 ##################################################################
 
@@ -52,6 +54,10 @@ To use this method you should have a valid poll id to pass it as a parameter in 
 
 `http://127.0.0.1:5000/api/poll/+VALID_ID`
 
+This request will return a json with the following format:
+
+`{'_id':id, 'question': question, 'answers_list': answers_list}`
+
 ##################################################################
 
 ## PUT one answer:
@@ -66,6 +72,9 @@ You can invoke this request by sending a PUT request to the following url:
 `http://127.0.0.1:5000/api/poll/+VALID_ID`
 
 Please note that any violation of the mentioned conditions will produce a failer
+This request will return a json with the following format:
+
+`{'_id':id, 'question': question, 'answers_list': new_answers_list}`
 
 ##################################################################
 

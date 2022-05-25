@@ -1,4 +1,6 @@
 
+from asyncore import poll
+from unittest import result
 from flask import Flask, request, jsonify,Response # For flask implementation
 from flask_restful import Api, Resource, abort
 #import pymongo
@@ -20,13 +22,28 @@ api = Api(app)
 
 class Polls (Resource):
     def get(self):
+        try:
+            results=list(poll_col.find({}))
+            results_str = str(results)
+            results_clean = results_str.replace("ObjectId(","").replace(")","")
+            results_clean_list = ast.literal_eval(results_clean)
+            results_dict = {}
+            i=1
 
-        return
+            for poll in results_clean_list:
+                results_dict["Poll "+str(i)]=poll
+                i+=1
+ #           
+            return Response(str(results_dict), status=200,mimetype="application/json")
+
+
+        except:
+            return Response("Service is not available right now. Please try again soon..",status=500, mimetype="application/json")
+
 
     def post(self):
         try:
             dictionary = dict(request.get_json())
-            print(dictionary)
             answers_list = {}
             for answer in  list(dictionary.get('answers_list')):
                 answers_list[answer]=0
@@ -35,15 +52,14 @@ class Polls (Resource):
     
             
             if (len(new_entry.get('question'))==0):
-                abort (400,message="It looks like there is no question in your poll..")
+                return Response("Bad entry! Your question field looks empty..",status=400, mimetype="application/json")
             elif (len(new_entry.get('answers_list'))==0):
-                abort (400,message="It looks like your pol has no answers..")
+                return Response("Bad entry! Please make sure to add some answers to your poll..",status=400, mimetype="application/json")
             
                 
             #create in database
             
             result = poll_col.insert_one(new_entry)
-            print(1234)
             
             id = result.inserted_id
             
@@ -51,22 +67,27 @@ class Polls (Resource):
             return Response(response_text,status=201, mimetype='application/json')
             
         except:
-            abort(400, message="Bad entry! Please make sure that the entry match the especification in the documentation")
+
+            return Response("Bad entry! Please make sure that the entry match the especification in the documentation",status=400, mimetype="application/json")
 
 
 
-#todos = db.todo #Select the collection
 
 
 
 class Poll (Resource):
     def get(self,id):
         try:
-            result = poll_col.find_one({"_id":id})
-            return result
-
+            poll_dict = str(poll_col.find_one(ObjectId(id)))
+            
+            if (poll_dict!=None):
+                poll_dict =ast.literal_eval(poll_dict.replace("ObjectId(","").replace(")",""))
+                
+                return Response(str(poll_dict),status=200,mimetype= 'application/json')
+            else:
+                return Response("Bad entry! Please make sure to enter a valid poll id",status=404,mimetype="application/json")
         except:
-            abort(400, message="Bad entry! Please make sure to enter a valid poll id")
+            return Response("Bad entry! Please make sure to enter a valid poll id",status=404,mimetype="application/json")
         
     def put(self,id):
         try:
@@ -74,33 +95,19 @@ class Poll (Resource):
             chosen_answer = list(dictionary.values())[0]
             poll_dict = str(poll_col.find_one(ObjectId(id)))
             poll_dict =ast.literal_eval(poll_dict.replace("ObjectId(","").replace(")",""))
-            print(poll_dict)
             
             answers_list = poll_dict["answers_list"]
             if chosen_answer in answers_list:
                 answers_list[chosen_answer]+=1
-                print(answers_list)
+                
                 poll_dict["answers_list"]=answers_list
                 poll_col.find_one_and_update(filter={"_id":ObjectId(id)},update={'$set':{"answers_list":answers_list}},return_document=ReturnDocument.AFTER)
-                print(poll_dict)
                 return Response(str(poll_dict),status=200,mimetype='application/json')
             else:
-                abort(400, message="Bad entry! Please make sure to enter a valid answer")
+                return Response("Bad entry! Please make sure to enter a valid answer",status=404,mimetype="application/json")
 
         except: 
-            abort(400, message="Bad entry! Please make sure to enter a valid poll id")
-
-
-
-    def post(self):
-        return
-    
-class Hotel (Resource):
-    def get(self,id):
-        if (id == None):
-            
-            return # get all the open polls
-        
+            return Response("Bad entry! Please make sure to enter a valid poll id",status=404,mimetype="application/json")
 
 
 
@@ -113,7 +120,6 @@ api.add_resource(Poll,"/api/poll/<string:id>")
 
 api.add_resource(Polls,"/api/polls/")
 
-api.add_resource(Hotel,"/api/hotels/<string:name>")
 
 
 

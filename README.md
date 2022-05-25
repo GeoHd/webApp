@@ -1,10 +1,10 @@
 # webApp: code challange
 ## Author: George Hadib
 
-#Intro:
+# Intro:
 webApp is a backend arquitecture for a polling sevice's webapp. The service uses a mongodb database called cisco and saves the polls into documents alocated in a collection called Polls and a python RESTful api server that connects to the database through pymongo
 
-#Requirements:
+# Requirements:
 Please make sure to fulfil the following requirements before testing the program:
 1. Please make sure to have a mongodb server installed and configured in your local machine. For instant use of the program, make sure to run the server on localhost and port 27017. You can also adabt the code easily to environment changes by modifying the mongodb connector.
 2. Please make sure to have python3 installed in your machine (built on python 3.8).

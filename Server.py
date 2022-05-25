@@ -31,7 +31,7 @@ class Polls (Resource):
             i=1
 
             for poll in results_clean_list:
-                results_dict["Poll "+str(i)]=poll
+                results_dict["Poll_"+str(i)]=poll
                 i+=1
  #           
             return Response(str(results_dict), status=200,mimetype="application/json")

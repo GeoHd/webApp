@@ -15,4 +15,10 @@ Please make sure to fulfil the following requirements before testing the program
 
 After fulfilling the requirements, you can run the mongodb database, run server and afterwards the test program. The test program will print the test cases and their results in the command line.
 
+# Limitations:
+1. No authentication method was used. A token generator can be used to allow creators to modify polls, users to change their answers and prevent users from answering multiple times
+2. No deletion method es used. For the moment, creators can't delete their polls nor users their answers.
+3. No administrator figure is defined. An admin should be defined with some privileged methods.
+4. Many other implementation limitations regarding security, access control, logging ...
+
 Cheers!
